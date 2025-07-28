@@ -1,0 +1,38 @@
+name: Deploy Hexo to Cloudflare Pages
+
+on:
+  push:
+    branches:
+      - main   # 触发构建的分支，改成你使用的主分支名，比如 main 或 master
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout with submodules
+      uses: actions/checkout@v3
+      with:
+        submodules: true      # 保留，确保子模块被拉取
+        fetch-depth: 0
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18     # 你用的 Node 版本，Hexo 6 推荐用 18+
+
+    - name: Install dependencies
+      run: |
+        npm install -g hexo-cli
+        npm install
+
+    - name: Generate static files
+      run: hexo generate
+
+    - name: Deploy to Cloudflare Pages
+      uses: cloudflare/pages-action@v1
+      with:
+        apiToken: ${{ secrets.CF_API_TOKEN }}    # 必须，Cloudflare API Token，需提前在 GitHub Secrets 配置
+        accountId: ${{ secrets.CF_ACCOUNT_ID }}  # 必须，Cloudflare 账号 ID，同样需配置 Secrets
+        projectName: hexoblog                    # 必须，Cloudflare Pages 项目名，登录 Cloudflare Pages 看项目名字
+        directory: ./public                       # 必须，Hexo 静态输出目录，默认 public
